@@ -1,3 +1,8 @@
+// devices/device5.js
 const Device = require('./Device');
 
-module.exports = new Device('ASIC S19', 3200, 18, 'constant');
+// ASIC майнер S19
+// Сценарий: ALWAYS_ON (работает почти всегда)
+// waveform: 'constant' (очень стабильное потребление)
+// initialPeakCurrent: может быть небольшим при включении блоков питания
+module.exports = new Device('ASIC_S19', 3250, 16, 'constant');

@@ -2,6 +2,7 @@ body {
     font-family: sans-serif;
     margin: 20px;
     background-color: #f4f4f4;
+    color: #333;
 }
 
 h1, h2 {
@@ -13,7 +14,8 @@ h1, h2 {
     display: flex;
     gap: 30px;
     justify-content: center;
-    flex-wrap: wrap;
+    flex-wrap: wrap; 
+    margin-bottom: 20px;
 }
 
 .controls, .status {
@@ -21,9 +23,9 @@ h1, h2 {
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    min-width: 300px;
-    flex: 1;
-    max-width: 500px;
+    min-width: 300px; 
+    flex: 1; 
+    max-width: 600px; 
 }
 
 .form-group {
@@ -37,24 +39,38 @@ label {
     color: #555;
 }
 
-select, input[type="number"] {
+select, input[type="text"], input[type="number"], textarea {
     width: 100%;
-    padding: 8px;
+    padding: 10px;
     border: 1px solid #ccc;
     border-radius: 4px;
-    box-sizing: border-box; /* Учитывает padding и border в ширине */
+    box-sizing: border-box;
+    font-size: 1em;
+}
+
+textarea#config-content {
+    font-family: monospace;
+    font-size: 0.9em;
+    resize: vertical;
+    background-color: #f9f9f9;
+    min-height: 150px;
+}
+
+textarea#config-content:read-only {
+    background-color: #e9e9e9;
+    cursor: not-allowed;
 }
 
 button {
-    background-color: #5cb85c;
+    background-color: #5cb85c; 
     color: white;
-    padding: 10px 15px;
+    padding: 12px 18px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     font-size: 1em;
-    width: 100%;
-    transition: background-color 0.2s;
+    width: 100%; 
+    transition: background-color 0.2s ease-in-out;
 }
 
 button:hover {
@@ -66,46 +82,30 @@ button:disabled {
     cursor: not-allowed;
 }
 
-
-#status-message {
+#status-message, .status-message { 
     background-color: #e9e9e9;
-    padding: 10px;
+    padding: 12px;
     border-radius: 4px;
-    min-height: 40px;
+    min-height: 20px; 
     margin-top: 10px;
     font-style: italic;
     color: #333;
+    word-wrap: break-word;
 }
+
 #process-log {
     margin-top: 15px;
-    background-color: #222;
-    color: #eee;
+    background-color: #282c34; 
+    color: #abb2bf; 
     padding: 10px;
     border-radius: 4px;
     font-family: monospace;
-    white-space: pre-wrap; /* Перенос строк */
-    word-wrap: break-word; /* Перенос длинных слов */
+    white-space: pre-wrap;
+    word-wrap: break-word;
     max-height: 300px;
-    overflow-y: auto; /* Добавляем прокрутку */
+    overflow-y: auto;
     font-size: 0.9em;
-    display: none; /* Показываем только когда есть логи */
-}
-
-textarea#config-content {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
-    font-family: monospace; /* Лучше для JSON */
-    font-size: 0.9em;
-    resize: vertical; /* Разрешаем изменять высоту */
-    background-color: #f9f9f9;
-}
-
-textarea#config-content:read-only {
-    background-color: #e9e9e9;
-    cursor: not-allowed;
+    display: none; 
 }
 
 #save-section {
@@ -115,8 +115,8 @@ textarea#config-content:read-only {
 }
 
 #save-config-button {
-    background-color: #f0ad4e; /* Оранжевый цвет для сохранения */
-    margin-top: 10px; /* Небольшой отступ сверху */
+    background-color: #f0ad4e; 
+    margin-top: 10px;
 }
 
 #save-config-button:hover {
@@ -124,13 +124,67 @@ textarea#config-content:read-only {
 }
 
 .error-message {
-    color: #d9534f; /* Красный цвет для ошибок */
+    color: #d9534f; 
     font-size: 0.9em;
     margin-top: 5px;
 }
 
 hr {
-    margin: 20px 0;
+    margin: 25px 0;
     border: 0;
-    border-top: 1px solid #eee;
+    border-top: 1px solid #ddd;
+}
+
+/* Стили для секции Визуализации */
+.visualization {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    margin-top: 30px;
+    width: 100%; 
+    box-sizing: border-box;
+}
+
+.visualization h2 {
+    text-align: left;
+    margin-bottom: 20px;
+}
+
+.chart-container {
+    background-color: #fff; 
+    border: 1px solid #eee;
+    border-radius: 4px;
+    padding: 15px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+#load-chart-button {
+    background-color: #5bc0de; 
+    width: auto; 
+    padding: 10px 20px;
+    margin-top: 5px;
+    margin-bottom: 15px;
+}
+
+#load-chart-button:hover {
+    background-color: #31b0d5;
+}
+
+/* Стили для группы элементов в одну строку (если понадобится снова) */
+.inline-group {
+    display: flex;
+    align-items: center;
+    gap: 10px; 
+    margin-bottom: 10px;
+}
+
+.inline-group label {
+    margin-bottom: 0; 
+    flex-shrink: 0; 
+}
+
+.inline-group input[type="number"] {
+    width: 120px; 
+    flex-grow: 0; 
 }

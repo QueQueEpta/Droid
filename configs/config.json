@@ -1,34 +1,57 @@
 {
-    "simulationDurationHours": 8,          
-    "timeStepMs": 1000,                    
-    "outputFile": "dataset.csv",           
-    "devicesToInclude": [                  
+    "simulationDurationHours": 24,
+    "timeStepMs": 1000,
+    "outputFile": "dataset_realistic_profiles_v2.csv",
+    "noiseLevelWatts": 15,
+    "devicesToInclude": [
       "device1",
       "device2",
       "device3",
       "device4",
-      "device5"
-      
+      "device5",
+      "device6"
     ],
-    "scenarioParams": {                    
-      "type": "simple_random",             
-      "avgOnTimeMinutes": {                
-        "device1": 45,
-        "device2": 90,
-        "device3": 5,   
-        "device4": 70,
-        "device5": 180, 
-        "device6": 45
-      },
-      "avgOffTimeMinutes": {               
-        "device1": 120,
-        "device2": 180,
-        "device3": 15,  
-        "device4": 300,
-        "device5": 60,
-        "device6": 120
-      },
-      "changeProbability": 0.01            
-    },
-    "noiseLevelWatts": 15                  
+    "deviceScenarioConfigs": {
+        "device1": {
+            "type": "cyclic",
+            "params": { 
+                "onDurationRangeMs": [10800000, 21600000], 
+                "offDurationRangeMs": [3600000, 14400000] 
+            }
+        },
+        "device2": {
+            "type": "cyclic",
+            "params": { 
+                "onDurationRangeMs": [1200000, 2400000], 
+                "offDurationRangeMs": [900000, 1800000] 
+            }
+        },
+        "device3": {
+            "type": "cyclic",
+            "params": { 
+                "onDurationRangeMs": [480000, 900000], 
+                "offDurationRangeMs": [1200000, 2400000] 
+            }
+        },
+        "device4": {
+            "type": "complex_cycle_device", 
+            "params": { 
+                "avgIntervalBetweenCyclesMinutes": 1080, 
+                "startProbability": 0.3, 
+                "cycleDurationMinutesRange": [60, 110] 
+            } 
+        },
+        "device5": {
+            "type": "always_on",
+            "params": {}
+        },
+        "device6": {
+            "type": "manual_short_usage",
+            "params": {
+                "usagesPerDayRange": [3, 7], 
+                "usageDurationMsRange": [120000, 240000], 
+                "probabilityOfUsage": 0.15 
+            }
+        }
+    }
   }

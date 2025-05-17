@@ -1,10 +1,8 @@
+// generate_dataset.js
 const fs = require('fs');
 const path = require('path');
-// Импортируем все устройства и функцию обновления из папки devices
 const { devices: allDevices, updateDeviceState } = require('./devices');
-// Импортируем генератор сценариев
 const scenarioGenerator = require('./scenario_generator');
-// Импортируем утилиту для записи CSV
 const { createCSVWriter } = require('./data_writer');
 
 // --- Парсинг аргументов командной строки ---
@@ -31,12 +29,12 @@ if (!configPathArg || !outputPathArg) {
 const configPath = path.resolve(configPathArg);
 const outputFile = path.resolve(outputPathArg);
 
-console.log("--- Запуск генератора датасетов (с доп. логами и ожиданием записи) ---");
+console.log("--- Запуск генератора датасетов (с реалистичными профилями) ---");
 console.log(`Используется конфиг: ${configPath}`);
 console.log(`Выходной файл: ${outputFile}`);
 
 
-// --- Вспомогательная функция для очистки имени для использования в заголовке CSV ---
+// --- Вспомогательные функции ---
 function sanitizeNameForHeader(name) {
     if (!name) return 'unknown_device';
     const sanitized = name
@@ -44,14 +42,11 @@ function sanitizeNameForHeader(name) {
         .replace(/[^a-zA-Z0-9_]/g, '');
     return sanitized.length > 0 ? sanitized : 'device';
 }
-
-// --- Вспомогательная функция для округления до 2 знаков после запятой ---
 function roundToTwoDecimals(num) {
     return Math.round((num + Number.EPSILON) * 100) / 100;
 }
 
-
-// --- 1. Загрузка конфигурации (из указанного файла) ---
+// --- 1. Загрузка конфигурации ---
 let config;
 try {
     console.log(`Загрузка конфигурации из ${configPath}...`);
@@ -61,7 +56,6 @@ try {
     const configFileContent = fs.readFileSync(configPath, 'utf-8');
     config = JSON.parse(configFileContent);
     console.log("Конфигурация успешно загружена.");
-    console.log(`Прочитанное значение simulationDurationHours: ${config.simulationDurationHours} (тип: ${typeof config.simulationDurationHours})`);
 } catch (error) {
     console.error(`Ошибка чтения или парсинга файла конфигурации ${configPath}:`, error);
     process.exit(1);
@@ -70,36 +64,34 @@ try {
 // --- 2. Инициализация параметров симуляции ---
 const durationHours = Number(config.simulationDurationHours);
 if (isNaN(durationHours) || durationHours <= 0) {
-    console.error(`Ошибка: Некорректное значение simulationDurationHours (${config.simulationDurationHours}) в файле конфигурации. Должно быть положительное число.`);
+    console.error(`Ошибка: Некорректное значение simulationDurationHours (${config.simulationDurationHours}) в файле конфигурации.`);
     process.exit(1);
 }
 
 const simulationDurationMs = durationHours * 60 * 60 * 1000;
 const timeStepMs = Number(config.timeStepMs);
 if (isNaN(timeStepMs) || timeStepMs <= 0) {
-    console.error(`Ошибка: Некорректное значение timeStepMs (${config.timeStepMs}) в файле конфигурации. Должно быть положительное число.`);
+    console.error(`Ошибка: Некорректное значение timeStepMs (${config.timeStepMs}) в файле конфигурации.`);
     process.exit(1);
 }
 
-const startTimeMs = Date.now();
+const startTimeMs = Date.now(); // Текущее время как Unix timestamp (UTC)
 const endTimeMs = startTimeMs + simulationDurationMs;
 const noiseLevelWatts = Number(config.noiseLevelWatts) || 0;
 
 console.log(`Длительность симуляции: ${durationHours} ч (${simulationDurationMs} мс)`);
 console.log(`Шаг времени: ${timeStepMs} мс`);
-console.log(`Время начала (мс): ${startTimeMs} (${new Date(startTimeMs).toISOString()})`);
-console.log(`Расчетное время окончания (мс): ${endTimeMs} (${new Date(endTimeMs).toISOString()})`);
+const startLogTime = new Date(startTimeMs).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow', hour12: false });
+const endLogTime = new Date(endTimeMs).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow', hour12: false });
+console.log(`Время начала (UTC): ${startTimeMs} (${new Date(startTimeMs).toISOString()})`);
+console.log(`Лог. время начала (МСК): ${startLogTime}`);
+console.log(`Расчетное лог. время окончания (МСК): ${endLogTime}`);
 console.log(`Фоновый шум: ${noiseLevelWatts} Вт`);
 
 // --- Фильтрация устройств ---
 const devicesToIncludeConfig = config.devicesToInclude || Object.keys(allDevices);
-if (!Array.isArray(devicesToIncludeConfig)) {
-    console.error("Ошибка: 'devicesToInclude' в файле конфигурации должен быть массивом строк.");
-    process.exit(1);
-}
-const activeDeviceIds = devicesToIncludeConfig;
-const activeDevices = {};
-activeDeviceIds.forEach(id => {
+const activeDevices = {}; // { deviceId: instance }
+devicesToIncludeConfig.forEach(id => {
     if (allDevices[id]) {
         activeDevices[id] = allDevices[id];
     } else {
@@ -107,27 +99,27 @@ activeDeviceIds.forEach(id => {
     }
 });
 const finalDeviceIds = Object.keys(activeDevices);
-console.log(`Активные устройства (${finalDeviceIds.length}): ${finalDeviceIds.map(id => `${id} (${activeDevices[id].name})`).join(', ')}`);
 
 if (finalDeviceIds.length === 0) {
     console.error("Нет активных устройств для симуляции. Проверьте 'devicesToInclude' в config.json.");
     process.exit(1);
 }
+console.log(`Активные устройства (${finalDeviceIds.length}): ${finalDeviceIds.map(id => `${id} (${activeDevices[id].name})`).join(', ')}`);
 
 
 // --- Инициализация генератора сценариев ---
-if (!config.scenarioParams) {
-     console.error("Ошибка: Отсутствует секция 'scenarioParams' в файле конфигурации.");
+if (!config.deviceScenarioConfigs) {
+     console.error("Ошибка: Отсутствует секция 'deviceScenarioConfigs' в файле конфигурации.");
      process.exit(1);
 }
-scenarioGenerator.initialize(finalDeviceIds, config.scenarioParams);
+scenarioGenerator.initialize(activeDevices, config.deviceScenarioConfigs);
 
 
 // --- Начальное состояние устройств ---
 let currentDeviceStates = {};
 finalDeviceIds.forEach(id => {
-    currentDeviceStates[id] = false;
-    updateDeviceState(id, false);
+    currentDeviceStates[id] = false; // Начинаем все выключенными
+    updateDeviceState(id, false);    // Устанавливаем начальное состояние в экземплярах устройств
 });
 
 
@@ -149,8 +141,6 @@ if (!fs.existsSync(outputDir)) {
     console.log(`Создание директории для датасетов: ${outputDir}`);
     fs.mkdirSync(outputDir, { recursive: true });
 }
-
-// *** Получаем ОБА потока из createCSVWriter ***
 const { csvStream, writableStream: fileStream } = createCSVWriter(outputFile, headers);
 
 
@@ -159,94 +149,90 @@ let currentTimeMs = startTimeMs;
 let iteration = 0;
 const totalIterations = Math.ceil(simulationDurationMs / timeStepMs);
 console.log(`Расчетное кол-во итераций: ${totalIterations}`);
-console.log(`Начало симуляции... Проверка условия: currentTimeMs (${currentTimeMs}) < endTimeMs (${endTimeMs}) -> ${currentTimeMs < endTimeMs}`);
 
-const logIntervalIterations = Math.max(1000, Math.floor(totalIterations / 100));
-let lastLoggedIteration = -logIntervalIterations;
+const logIntervalIterations = Math.max(1000, Math.floor(totalIterations / 50)); // Логгируем чаще или каждые 1000 итераций
+let lastLoggedIteration = -logIntervalIterations; // Чтобы первый лог точно произошел
 
 while (currentTimeMs < endTimeMs) {
 
-    // Логгирование внутри цикла
     if (iteration >= lastLoggedIteration + logIntervalIterations || iteration === 0) {
-        const progressPercent = ((iteration / totalIterations) * 100).toFixed(3);
-        console.log(`[Итерация ${iteration}/${totalIterations} (${progressPercent}%)] currentTimeMs: ${currentTimeMs} (${new Date(currentTimeMs).toISOString()}), endTimeMs: ${endTimeMs}, Условие (${currentTimeMs < endTimeMs})`);
+        const progressPercent = ((iteration / totalIterations) * 100).toFixed(1);
+        const displayTime = new Date(currentTimeMs).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow', hour12: false });
+        console.log(`[Итерация ${iteration}/${totalIterations} (${progressPercent}%)] Время: ${displayTime} (МСК)`);
         lastLoggedIteration = iteration;
     }
 
     // 4.1 Сценарии
-    const nextStates = scenarioGenerator.getNextStates(currentTimeMs, currentDeviceStates, timeStepMs);
+    const nextStatesFromScenario = scenarioGenerator.getNextStates(currentTimeMs, currentDeviceStates, timeStepMs);
+    
     // 4.2 Обновление состояний
-    for (const deviceId of finalDeviceIds) { if (nextStates[deviceId] !== currentDeviceStates[deviceId]) { updateDeviceState(deviceId, nextStates[deviceId]); currentDeviceStates[deviceId] = nextStates[deviceId]; } }
+    for (const deviceId of finalDeviceIds) {
+        if (nextStatesFromScenario[deviceId] !== currentDeviceStates[deviceId]) {
+            updateDeviceState(deviceId, nextStatesFromScenario[deviceId]);
+            currentDeviceStates[deviceId] = nextStatesFromScenario[deviceId];
+        }
+    }
+    
     // 4.3 Генерация данных
     let aggregatedPower = 0, aggregatedCurrent = 0;
     const individualDeviceReadings = {};
-    for (const deviceId of finalDeviceIds) { const deviceData = activeDevices[deviceId].generateData(timeStepMs); individualDeviceReadings[deviceId] = deviceData; aggregatedPower += deviceData.power; aggregatedCurrent += deviceData.current; }
+    for (const deviceId of finalDeviceIds) {
+        const deviceData = activeDevices[deviceId].generateData(timeStepMs);
+        individualDeviceReadings[deviceId] = deviceData;
+        aggregatedPower += deviceData.power;
+        aggregatedCurrent += deviceData.current;
+    }
+    
     // 4.4 Шум
     const currentNoise = Math.max(0, noiseLevelWatts + (Math.random() - 0.5) * (noiseLevelWatts * 0.5));
-    aggregatedPower += currentNoise; aggregatedCurrent += Math.max(0, currentNoise / 220);
+    aggregatedPower += currentNoise;
+    // Используем напряжение первого активного устройства для расчета тока шума, или 220В по умолчанию
+    const noiseVoltage = activeDevices[finalDeviceIds[0]]?.voltage || 220;
+    aggregatedCurrent += Math.max(0, currentNoise / noiseVoltage);
+    
     // 4.5 Формирование строки с округлением
     const rowData = { timestamp: currentTimeMs, aggregated_power: roundToTwoDecimals(aggregatedPower), aggregated_current: roundToTwoDecimals(aggregatedCurrent) };
-    finalDeviceIds.forEach(id => { const deviceName = activeDevices[id]?.name; const sanitizedName = sanitizeNameForHeader(deviceName || id); const devicePower = individualDeviceReadings[id]?.power ?? 0; rowData[`${sanitizedName}_power`] = roundToTwoDecimals(devicePower); });
+    finalDeviceIds.forEach(id => {
+        const deviceName = activeDevices[id]?.name;
+        const sanitizedName = sanitizeNameForHeader(deviceName || id);
+        const devicePower = individualDeviceReadings[id]?.power ?? 0;
+        rowData[`${sanitizedName}_power`] = roundToTwoDecimals(devicePower);
+    });
 
-    // 4.6 Запись в CSV поток (fast-csv)
-    try {
-        // fast-csv сам обрабатывает backpressure (давление) от нижележащего потока
-        csvStream.write(rowData);
-    } catch (error) {
-         console.error(`Ошибка записи строки ${iteration + 1} в CSV (fast-csv):`, error);
-    }
+    // 4.6 Запись в CSV поток
+    csvStream.write(rowData);
 
     // 4.7 Продвигаем время и итерацию
     currentTimeMs += timeStepMs;
     iteration++;
 
-    // Проверка на зависание
-    if (iteration > totalIterations + 100) {
+    if (iteration > totalIterations + 1000) { // Допуск на случай неточного расчета totalIterations
         console.error(`!!! Аварийный выход: Количество итераций (${iteration}) значительно превысило расчетное (${totalIterations}).`);
-        break; // Прерываем цикл
+        break;
     }
-
-} // Конец while
-
-// *** Логгирование ПОСЛЕ цикла ***
-console.log(`--- Цикл while завершен ---`);
-console.log(`Финальная итерация: ${iteration}`);
-console.log(`Финальное currentTimeMs: ${currentTimeMs} (${new Date(currentTimeMs).toISOString()})`);
-console.log(`Ожидаемое endTimeMs: ${endTimeMs}`);
-console.log(`Разница (endTimeMs - currentTimeMs): ${endTimeMs - currentTimeMs} мс`);
+}
 
 // --- 5. Завершение записи ---
-console.log("Симуляция завершена (логика скрипта). Завершение записи CSV потока...");
+console.log(`--- Цикл симуляции завершен (Итераций: ${iteration}) ---`);
+const finalLogTime = new Date(currentTimeMs).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow', hour12: false });
+console.log(`Финальное currentTimeMs (UTC): ${currentTimeMs} (${new Date(currentTimeMs).toISOString()})`);
+console.log(`Финальное лог. время (МСК): ${finalLogTime}`);
 
-// Закрываем CSV поток (fast-csv). Это должно вызвать событие 'finish' на нижележащем потоке fileStream,
-// когда все данные из буфера csvStream будут переданы в fileStream.
 csvStream.end();
 
-// --- Слушаем событие 'finish' на ОСНОВНОМ файловом потоке (fs.WriteStream) ---
-// Это событие срабатывает, когда все данные записаны ИЗ БУФЕРОВ Node.js В ОПЕРАЦИОННУЮ СИСТЕМУ.
 fileStream.on('finish', () => {
-    console.log(`--- Событие 'finish' на основном файловом потоке (fs.WriteStream) ---`);
     console.log(`--- Генерация датасета и запись в файл УСПЕШНО ЗАВЕРШЕНЫ ---`);
     console.log(`Данные сохранены в файл: ${outputFile}`);
-    process.exit(0); // Успешное завершение ТОЛЬКО после finish основного потока
+    process.exit(0);
 });
 
-// Обработчик ошибок на основном потоке записи файла
 fileStream.on('error', (error) => {
      console.error("--- Ошибка основного файлового потока (fs.WriteStream) ---", error);
-     process.exit(1); // Завершение с ошибкой
+     process.exit(1);
 });
 
-// Оставляем обработчик ошибок и на csvStream на случай ошибок форматирования
-csvStream.on('error', (error) => {
-     console.error("--- Ошибка потока CSV (fast-csv) ---", error);
-     // Можно добавить process.exit(1) и здесь, если ошибка форматирования критична
-});
-
-
-// Увеличиваем таймаут, т.к. запись большого файла может занять время
-console.log("Ожидание завершения записи файла (до 5 минут)...");
+// Таймаут на случай зависания записи
 setTimeout(() => {
     console.warn("Таймаут ожидания завершения записи CSV (5 минут). Процесс завершается принудительно.");
-    process.exit(1); // Выход с ошибкой по таймауту
-}, 300000); // 5 минут = 300 * 1000 мс
+    process.exit(1);
+}, 300000); // 5 минут
