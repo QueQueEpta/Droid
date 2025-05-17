@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генератор Датасетов NILM</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Генератор Датасетов для NILM</h1>
+
+    <div class="container">
+        <section class="controls">
+            <h2>Параметры Генерации</h2>
+            <form id="generation-form">
+                <div class="form-group">
+                    <label for="config-select">Выберите файл конфигурации:</label>
+                    <select id="config-select" name="configFile" required>
+                        <option value="" disabled selected>Загрузка...</option>
+                        <!-- Опции будут загружены динамически -->
+                    </select>
+                </div>
+
+                <!-- НОВОЕ: Область для отображения и редактирования конфига -->
+                <div class="form-group">
+                    <label for="config-content">Содержимое конфигурации (можно редактировать):</label>
+                    <textarea id="config-content" rows="15" readonly placeholder="Выберите файл конфигурации для просмотра..."></textarea>
+                    <div id="config-error" class="error-message" style="display: none;"></div>
+                </div>
+
+                 <!-- НОВОЕ: Кнопка сохранения и поле комментария (изначально скрыты) -->
+                 <div id="save-section" style="display: none;">
+                    <div class="form-group">
+                        <label for="save-comment">Комментарий к изменениям (опционально):</label>
+                        <input type="text" id="save-comment" placeholder="Например: увеличен шум, добавлены устройства">
+                    </div>
+                    <button type="button" id="save-config-button">Сохранить как новый конфиг</button>
+                </div>
+
+
+                <hr> <!-- Разделитель -->
+
+                <button type="submit" id="generate-button">Запустить Генерацию (с текущим конфигом)</button>
+            </form>
+        </section>
+
+        <section class="status">
+            <h2>Статус Генерации</h2>
+            <div id="status-message">Ожидание запуска...</div>
+            <pre id="process-log"></pre>
+        </section>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

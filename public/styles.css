@@ -1,0 +1,136 @@
+body {
+    font-family: sans-serif;
+    margin: 20px;
+    background-color: #f4f4f4;
+}
+
+h1, h2 {
+    text-align: center;
+    color: #333;
+}
+
+.container {
+    display: flex;
+    gap: 30px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.controls, .status {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    min-width: 300px;
+    flex: 1;
+    max-width: 500px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #555;
+}
+
+select, input[type="number"] {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box; /* Учитывает padding и border в ширине */
+}
+
+button {
+    background-color: #5cb85c;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1em;
+    width: 100%;
+    transition: background-color 0.2s;
+}
+
+button:hover {
+    background-color: #4cae4c;
+}
+
+button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+
+#status-message {
+    background-color: #e9e9e9;
+    padding: 10px;
+    border-radius: 4px;
+    min-height: 40px;
+    margin-top: 10px;
+    font-style: italic;
+    color: #333;
+}
+#process-log {
+    margin-top: 15px;
+    background-color: #222;
+    color: #eee;
+    padding: 10px;
+    border-radius: 4px;
+    font-family: monospace;
+    white-space: pre-wrap; /* Перенос строк */
+    word-wrap: break-word; /* Перенос длинных слов */
+    max-height: 300px;
+    overflow-y: auto; /* Добавляем прокрутку */
+    font-size: 0.9em;
+    display: none; /* Показываем только когда есть логи */
+}
+
+textarea#config-content {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-family: monospace; /* Лучше для JSON */
+    font-size: 0.9em;
+    resize: vertical; /* Разрешаем изменять высоту */
+    background-color: #f9f9f9;
+}
+
+textarea#config-content:read-only {
+    background-color: #e9e9e9;
+    cursor: not-allowed;
+}
+
+#save-section {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+
+#save-config-button {
+    background-color: #f0ad4e; /* Оранжевый цвет для сохранения */
+    margin-top: 10px; /* Небольшой отступ сверху */
+}
+
+#save-config-button:hover {
+    background-color: #ec971f;
+}
+
+.error-message {
+    color: #d9534f; /* Красный цвет для ошибок */
+    font-size: 0.9em;
+    margin-top: 5px;
+}
+
+hr {
+    margin: 20px 0;
+    border: 0;
+    border-top: 1px solid #eee;
+}
